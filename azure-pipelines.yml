@@ -15,7 +15,7 @@ variables:
   webAppName: 'terraform-env-per-branch'
 
   # Environment name
-  environmentName: ''
+  environmentName: 'DEVELOPMENT'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
