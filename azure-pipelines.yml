@@ -30,6 +30,8 @@ stages:
       vmImage: $(vmImageName)
 
     steps:
+    - script: echo 'abc'
+      displayName: print abc
     - task: NodeTool@0
       inputs:
         versionSpec: '10.x'
