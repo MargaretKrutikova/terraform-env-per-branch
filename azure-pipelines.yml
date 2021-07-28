@@ -69,6 +69,10 @@ stages:
       runOnce:
         deploy:
           steps:
+          - task: TerraformInstaller@0
+            displayName: Install Terraform
+            inputs:
+              terraformVersion: 'latest'
           - task: AzureWebApp@1
             displayName: 'Azure Web App Deploy: '
             inputs:
