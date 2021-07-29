@@ -27,7 +27,8 @@ resource "azurerm_app_service_plan" "local" {
   name = "terraform-env-per-branch-appserviceplan"
   location = azurerm_resource_group.local.location
   resource_group_name = azurerm_resource_group.local.name
-
+  kind = "Linux"
+  reserved = true
   sku {
     tier = "Free"
     size = "S1"
