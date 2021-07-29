@@ -12,7 +12,7 @@ variables:
   azureSubscription: '429e68d9-e49e-437c-a696-d306e0869bc1'
 
   # Web app name
-  webAppName: 'terraform-env-per-branch'
+  webAppName: 'terraform-env-per-branch-appservice'
 
   # Environment name
   environmentName: 'DEVELOPMENT'
@@ -79,7 +79,7 @@ stages:
               -backend-config="container_name=$TERRAFORM_CONTAINER_NAME" \
               -backend-config="key=$TERRAFORM_FILE_KEY" \
               -backend-config="sas_token=$SAS_TOKEN"
-            
+        failOnStderr: true
         displayName: Terraform Init
         env:
           STORAGE_ACCOUNT_NAME:     $(STORAGE_ACCOUNT_NAME)
@@ -91,27 +91,28 @@ stages:
           terraform apply -auto-approve -input=false
             
         displayName: Terraform Apply
+        failOnStderr: true
         env:
           ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
           ARM_CLIENT_ID:       $(ARM_CLIENT_ID)
           ARM_CLIENT_SECRET:   $(ARM_CLIENT_SECRET)
           ARM_TENANT_ID:       $(ARM_TENANT_ID)
 
-  # - deployment: Deploy
-  #   displayName: Deploy
-  #   environment: $(environmentName)
-  #   pool:
-  #     vmImage: $(vmImageName)
-  #   strategy:
-  #     runOnce:
-  #       deploy:
-  #         steps:
-  #         - task: AzureWebApp@1
-  #           displayName: 'Azure Web App Deploy: '
-  #           inputs:
-  #             azureSubscription: $(azureSubscription)
-  #             appType: webAppLinux
-  #             appName: $(webAppName)
-  #             runtimeStack: 'NODE|10.10'
-  #             package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
-  #             startUpCommand: 'npm run start'
+  - deployment: Deploy
+    displayName: Deploy
+    environment: $(environmentName)
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebApp@1
+            displayName: 'Azure Web App Deploy: '
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appType: webAppLinux
+              appName: $(webAppName)
+              runtimeStack: 'NODE|12-lts'
+              package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+              startUpCommand: 'npm run start'
