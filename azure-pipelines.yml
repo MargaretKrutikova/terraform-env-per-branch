@@ -66,6 +66,7 @@ stages:
       vmImage: $(vmImageName)
     variables:
     - group: TerraformBackendVars
+    - group: TerraformServicePrincipalVars
     steps:
       - task: TerraformInstaller@0
         displayName: Install Terraform
@@ -85,22 +86,32 @@ stages:
           TERRAFORM_CONTAINER_NAME: $(TERRAFORM_CONTAINER_NAME)
           TERRAFORM_FILE_KEY:       $(TERRAFORM_FILE_KEY)
           SAS_TOKEN:                $(SAS_TOKEN)
+      - script: |
+          cd ./terraform
+          terraform apply -auto-approve main.tfplan
+            
+        displayName: Terraform Apply
+        env:
+          ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+          ARM_CLIENT_ID:       $(ARM_CLIENT_ID)
+          ARM_CLIENT_SECRET:   $(ARM_CLIENT_SECRET)
+          ARM_TENANT_ID:       $(ARM_TENANT_ID)
 
-  - deployment: Deploy
-    displayName: Deploy
-    environment: $(environmentName)
-    pool:
-      vmImage: $(vmImageName)
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: AzureWebApp@1
-            displayName: 'Azure Web App Deploy: '
-            inputs:
-              azureSubscription: $(azureSubscription)
-              appType: webAppLinux
-              appName: $(webAppName)
-              runtimeStack: 'NODE|10.10'
-              package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
-              startUpCommand: 'npm run start'
+  # - deployment: Deploy
+  #   displayName: Deploy
+  #   environment: $(environmentName)
+  #   pool:
+  #     vmImage: $(vmImageName)
+  #   strategy:
+  #     runOnce:
+  #       deploy:
+  #         steps:
+  #         - task: AzureWebApp@1
+  #           displayName: 'Azure Web App Deploy: '
+  #           inputs:
+  #             azureSubscription: $(azureSubscription)
+  #             appType: webAppLinux
+  #             appName: $(webAppName)
+  #             runtimeStack: 'NODE|10.10'
+  #             package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+  #             startUpCommand: 'npm run start'
