@@ -88,7 +88,7 @@ stages:
           SAS_TOKEN:                $(SAS_TOKEN)
       - script: |
           cd ./terraform
-          terraform apply -auto-approve main.tfplan
+          terraform apply -auto-approve -input=false
             
         displayName: Terraform Apply
         env:
