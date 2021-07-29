@@ -71,6 +71,8 @@ stages:
           steps:
           - task: TerraformInstaller@0
             displayName: Install Terraform
+            inputs:
+              terraformVersion: latest
           - script: terraform version
             displayName: 'check terraform version'
           - task: AzureWebApp@1
