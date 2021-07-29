@@ -12,10 +12,10 @@ variables:
   azureSubscription: 'c8a57e97-c12f-4a1a-bf49-5f21b3cad8b2'
 
   # Web app name
-  webAppName: ''
+  webAppName: 'terraform-env-per-branch'
 
   # Environment name
-  environmentName: ''
+  environmentName: 'DEVELOPMENT'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
