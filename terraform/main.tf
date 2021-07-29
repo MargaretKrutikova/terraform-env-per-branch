@@ -7,7 +7,7 @@ variable "region" {
 
 # providers
 terraform {
-   required_providers {
+  required_providers {
     azurerm = {
       source = "hashicorp/azurerm"
       version = "~>2.0"
@@ -16,7 +16,6 @@ terraform {
 }
 provider "azurerm" {
   features {}
-  subscription_id = var.azure_subscription_id
 }
 
 resource "azurerm_resource_group" "local" {
