@@ -1,6 +1,4 @@
 # variables
-variable "azure_subscription_id" {}
-
 variable "region" {
   default = "Norway East" 
 }
