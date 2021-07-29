@@ -79,12 +79,12 @@ stages:
               -backend-config="key=$TERRAFORM_FILE_KEY" \
               -backend-config="sas_token=$SAS_TOKEN"
             
-            displayName: Terraform Init
-            env:
-              STORAGE_ACCOUNT_NAME:     $(STORAGE_ACCOUNT_NAME)
-              TERRAFORM_CONTAINER_NAME: $(TERRAFORM_CONTAINER_NAME)
-              TERRAFORM_FILE_KEY:       $(TERRAFORM_FILE_KEY)
-              SAS_TOKEN:                $(SAS_TOKEN)
+        displayName: Terraform Init
+        env:
+          STORAGE_ACCOUNT_NAME:     $(STORAGE_ACCOUNT_NAME)
+          TERRAFORM_CONTAINER_NAME: $(TERRAFORM_CONTAINER_NAME)
+          TERRAFORM_FILE_KEY:       $(TERRAFORM_FILE_KEY)
+          SAS_TOKEN:                $(SAS_TOKEN)
 
   - deployment: Deploy
     displayName: Deploy
