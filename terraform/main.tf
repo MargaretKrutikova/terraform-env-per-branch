@@ -44,6 +44,6 @@ resource "azurerm_app_service" "local" {
     "WEBSITE_NODE_DEFAULT_VERSION" = "14.15.1"
   }
   site_config {
-    linux_fx_version = "NODE|14-lts"
+    linux_fx_version = "NODE|14"
   }
 }
