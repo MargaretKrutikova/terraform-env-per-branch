@@ -6,6 +6,9 @@
 trigger:
 - master
 
+pool:
+  demands: Limit -equals DisableParallel
+
 variables:
 
   # Azure Resource Manager connection created during pipeline creation
@@ -28,6 +31,7 @@ stages:
     displayName: Build
     pool:
       vmImage: $(vmImageName)
+      demands: Limit -equals DisableParallel
 
     steps:
     - task: NodeTool@0
@@ -63,6 +67,7 @@ stages:
     environment: $(environmentName)
     pool:
       vmImage: $(vmImageName)
+      demands: Limit -equals DisableParallel
     strategy:
       runOnce:
         deploy:
