@@ -60,6 +60,32 @@ stages:
   dependsOn: Build
   condition: succeeded()
   jobs:
+  - job: Provision
+    displayName: Provision with Terraform
+    pool:
+      vmImage: $(vmImageName)
+    variables:
+    - group: TerraformBackendVars
+    steps:
+      - task: TerraformInstaller@0
+        displayName: Install Terraform
+        inputs:
+          terraformVersion: '1.0.3'
+      - script: |
+          cd ./terraform
+          terraform init \
+              -backend-config="storage_account_name=$STORAGE_ACCOUNT_NAME" \
+              -backend-config="container_name=$TERRAFORM_CONTAINER_NAME" \
+              -backend-config="key=$TERRAFORM_FILE_KEY" \
+              -backend-config="sas_token=$SAS_TOKEN"
+            
+            displayName: Terraform Init
+            env:
+              STORAGE_ACCOUNT_NAME:     $(STORAGE_ACCOUNT_NAME)
+              TERRAFORM_CONTAINER_NAME: $(TERRAFORM_CONTAINER_NAME)
+              TERRAFORM_FILE_KEY:       $(TERRAFORM_FILE_KEY)
+              SAS_TOKEN:                $(SAS_TOKEN)
+
   - deployment: Deploy
     displayName: Deploy
     environment: $(environmentName)
@@ -69,12 +95,6 @@ stages:
       runOnce:
         deploy:
           steps:
-          - task: TerraformInstaller@0
-            displayName: Install Terraform
-            inputs:
-              terraformVersion: '1.0.3'
-          - script: terraform version
-            displayName: 'check terraform version'
           - task: AzureWebApp@1
             displayName: 'Azure Web App Deploy: '
             inputs:
