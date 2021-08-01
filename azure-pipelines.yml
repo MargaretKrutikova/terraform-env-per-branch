@@ -93,7 +93,7 @@ stages:
 
             $branchSource = "$(Build.SourceBranch)"
             $branchSourcePath = $branchSource -replace "refs/heads/", ""
-
+            echo "Terraform workspace $branchSourcePath"
             terraform workspace select $branchSourcePath || terraform workspace new $branchSourcePath
 
             terraform apply -auto-approve -input=false
