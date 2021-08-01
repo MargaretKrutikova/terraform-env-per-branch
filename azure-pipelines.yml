@@ -4,15 +4,13 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 trigger:
-- master
+  - master
+  - feature/*
 
 variables:
 
   # Azure Resource Manager connection created during pipeline creation
   azureSubscription: '429e68d9-e49e-437c-a696-d306e0869bc1'
-
-  # Web app name
-  webAppName: 'terraform-env-per-branch-appservice'
 
   # Environment name
   environmentName: 'DEVELOPMENT'
@@ -56,7 +54,7 @@ stages:
 - stage: Provision
   displayName: Provision with Terraform
   jobs:
-  - deployment: 
+  - deployment: terraformdeploy
     environment: $(environmentName)
     pool:
       vmImage: $(vmImageName)
@@ -86,6 +84,7 @@ stages:
               TERRAFORM_FILE_KEY:       $(TERRAFORM_FILE_KEY)
               SAS_TOKEN:                $(SAS_TOKEN)
           - task: AzureCLI@2
+            name: terraform
             displayName: 'Terraform apply'
             inputs:
               azureSubscription: '$(azureSubscription)'
@@ -98,6 +97,14 @@ stages:
                 $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
                 terraform apply -auto-approve -input=false
+                # Export Terraform output as task output
+                $terraformOutput = terraform output -json | ConvertFrom-Json -AsHashtable
+                foreach ($outputVariable in $terraformOutput.keys) {
+                    $value = $terraformOutput[$outputVariable].value
+                    if ($value) {
+                        Write-Host "##vso[task.setvariable variable=$outputVariable;isOutput=true]$value"
+                    }
+                }   
               addSpnToEnvironment: true
               useGlobalConfig: true
               failOnStandardError: true
@@ -114,6 +121,8 @@ stages:
   - deployment: Deploy
     displayName: Deploy
     environment: $(environmentName)
+    variables:
+      webAppName: $[stageDependencies.Provision.terraformdeploy.outputs['terraform.webAppName']]
     pool:
       vmImage: $(vmImageName)
     strategy:
