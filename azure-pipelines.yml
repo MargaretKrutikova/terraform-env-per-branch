@@ -124,6 +124,7 @@ stages:
         displayName: Cleanup on every commit to master
         inputs:
           azureSubscription: $(azureSubscription)
+          addSpnToEnvironment: true
           scriptType: pscore
           scriptLocation: inlineScript
           useGlobalConfig: true
