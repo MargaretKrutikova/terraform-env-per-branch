@@ -122,7 +122,7 @@ stages:
     displayName: Deploy
     environment: $(environmentName)
     variables:
-      webAppName: $[stageDependencies.Provision.terraformdeploy.outputs['terraform.webAppName']]
+      webAppName: $[stageDependencies.Provision.terraformdeploy.outputs['terraform.webapp-name']]
     pool:
       vmImage: $(vmImageName)
     strategy:
