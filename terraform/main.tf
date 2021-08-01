@@ -48,3 +48,7 @@ resource "azurerm_app_service" "local" {
     linux_fx_version = "NODE|14"
   }
 }
+
+output "webapp-name" {
+  value = azurerm_app_service.local.name
+}
