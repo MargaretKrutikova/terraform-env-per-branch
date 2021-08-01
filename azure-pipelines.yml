@@ -136,7 +136,7 @@ stages:
               $MERGED_BRANCH_NAME = $result.matches.groups[1]
               Write-Output "Merged branch name: '$MERGED_BRANCH_NAME'"
 
-              if ($(terraform workspace list | grep -c "$MERGED_BRANCH_NAME") -eq 0) {
+              if ($(terraform workspace list | grep -c "$MERGED_BRANCH_NAME") -ne 0) {
                 Write-Output "Switch to workspace '$MERGED_BRANCH_NAME'"
                 terraform workspace select "$MERGED_BRANCH_NAME"
                 
