@@ -148,3 +148,22 @@ stages:
               runtimeStack: 'NODE|14-lts'
               package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
               startUpCommand: 'npm run start'
+
+- stage: cleanup_after_merge
+  displayName: Cleanup Dev environment after merge
+  condition: and(succeeded(), in(variables['Build.Reason'], 'IndividualCI'), in(variables['Build.SourceBranchName'], 'master'))
+  jobs:
+    - job: cleanup_dev_environment
+      steps:
+      - task: AzureCLI@2
+        displayName: Cleanup on every commit to master
+        inputs:
+          azureSubscription: $(azureSubscription)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $result = "$(Build.SourceVersionMessage)" | Select-String -Pattern "^Merge pull request #\d+ from .+\/feature\/(.+)"
+            if ($result.matches.success) {
+              $MERGED_BRANCH_NAME = $result.matches.groups[0]
+              Write-Output "Merged branch name: '$MERGED_BRANCH_NAME'"
+            }
