@@ -10,9 +10,9 @@ variable "app_name" {
 # locals
 
 locals {
-  rg_name = "${terraform.workspace}_${var.app_name}-rg"
-  app_service_plan_name = "${terraform.workspace}_${var.app_name}-service-plan"
-  app_name = "${terraform.workspace}_${var.app_name}-app"
+  rg_name = "${terraform.workspace}-${var.app_name}-rg"
+  app_service_plan_name = "${terraform.workspace}-${var.app_name}-service-plan"
+  app_name = "${terraform.workspace}-${var.app_name}-app"
 }
 
 # providers
