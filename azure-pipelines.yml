@@ -91,10 +91,10 @@ stages:
             $env:ARM_TENANT_ID       ??= $env:tenantId
             $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
-            $branchSource = "$(Build.SourceBranch)"
-            $branchSourcePath = $branchSource -replace "refs/heads/", ""
-            echo "Terraform workspace $branchSourcePath"
-            terraform workspace select $branchSourcePath || terraform workspace new $branchSourcePath
+            $branchName = "$(Build.SourceBranchName)" -replace "/", "-"
+
+            echo "Terraform workspace $branchName"
+            terraform workspace select $branchName || terraform workspace new $branchName
 
             terraform apply -auto-approve -input=false
             # Export Terraform output as task output
