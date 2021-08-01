@@ -161,6 +161,10 @@ stages:
           azureSubscription: $(azureSubscription)
           scriptType: pscore
           scriptLocation: inlineScript
+          useGlobalConfig: true
+          failOnStandardError: true
+          powerShellIgnoreLASTEXITCODE: false
+          workingDirectory: './terraform'
           inlineScript: |
             $result = "$(Build.SourceVersionMessage)" | Select-String -Pattern "^Merge pull request #\d+ from .+\/feature\/(.+)"
             if ($result.matches.success) {
