@@ -49,6 +49,6 @@ resource "azurerm_app_service" "local" {
   }
 }
 
-output "webapp-name" {
+output "webAppName" {
   value = azurerm_app_service.local.name
 }
