@@ -94,7 +94,13 @@ stages:
             $branchName = "$(Build.SourceBranchName)" -replace "/", "-"
 
             echo "Terraform workspace $branchName"
-            terraform workspace select $branchName || terraform workspace new $branchName
+            if ($(terraform workspace list | grep -c "$branchName") -eq 0) {
+              echo "Create new workspace $branchName"
+              terraform workspace new "$branchName" -no-color
+            } else {
+              echo "Switch to workspace $branchName"
+              terraform workspace select "$branchName" -no-color
+            }
 
             terraform apply -auto-approve -input=false
             # Export Terraform output as task output
