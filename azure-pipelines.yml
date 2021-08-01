@@ -100,7 +100,9 @@ stages:
                 # Export Terraform output as task output
                 $terraformOutput = terraform output -json | ConvertFrom-Json -AsHashtable
                 foreach ($outputVariable in $terraformOutput.keys) {
+                    echo $outputVariable
                     $value = $terraformOutput[$outputVariable].value
+                    echo $value
                     if ($value) {
                         Write-Host "##vso[task.setvariable variable=$outputVariable;isOutput=true]$value"
                     }
@@ -122,7 +124,8 @@ stages:
     displayName: Deploy
     environment: $(environmentName)
     variables:
-      webAppName: $[stageDependencies.Provision.terraformdeploy.outputs['terraform.webAppName']]
+      - name: webAppName
+        value: $[ stageDependencies.Provision.terraformdeploy.outputs['terraform.webAppName'] ]
     pool:
       vmImage: $(vmImageName)
     strategy:
