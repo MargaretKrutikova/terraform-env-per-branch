@@ -147,7 +147,7 @@ stages:
                 terraform workspace select "$MERGED_BRANCH_NAME"
                 
                 Write-Output "Destroying environment '$MERGED_BRANCH_NAME'"
-                terraform destroy
+                terraform destroy -auto-approve
 
                 terraform workspace select master
                 Write-Output "Deleting '$MERGED_BRANCH_NAME'"
