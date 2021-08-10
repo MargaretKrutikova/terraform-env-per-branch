@@ -25,19 +25,12 @@ stages:
         workingDirectory: $(srcWorkingDir)
         displayName: 'dotnet build'
 
-      - task: DotNetCoreCLI@2
+      - script: dotnet publish --configuration $(buildConfiguration) -o $(Build.ArtifactStagingDirectory)
         displayName: 'dotnet publish'
-        inputs:
-          command: publish
-          workingDirectory: $(srcWorkingDir)
-          publishWebProjects: True
-          arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-          zipAfterPublish: True
+        workingDirectory: $(srcWorkingDir)
 
-      - task: PublishBuildArtifacts@1
-        inputs:
-          pathToPublish: '$(Build.ArtifactStagingDirectory)'
-          artifactName: drop
+      - publish: '$(Build.ArtifactStagingDirectory)'
+        artifact: WebApp
 
 - stage: Provision
   displayName: Provision with Terraform
@@ -105,11 +98,10 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-      - task: DownloadBuildArtifacts@0
+      - task: DownloadPipelineArtifact@2
         inputs:
           buildType: 'current'
-          downloadType: 'single'
-          artifactName: 'drop'
+          artifact: WebApp
           downloadPath: '$(System.ArtifactsDirectory)'
 
       - task: AzureWebApp@1
