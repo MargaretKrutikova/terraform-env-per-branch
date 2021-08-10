@@ -6,6 +6,7 @@ pr: none
 variables:
   # Azure Resource Manager connection created during pipeline creation
   azureSubscription: 'c8a57e97-c12f-4a1a-bf49-5f21b3cad8b2'
+  artifactName: 'WebApp'
   vmImageName: 'ubuntu-latest'
   buildConfiguration: 'Release'
   srcWorkingDir: '$(Build.SourcesDirectory)/src'
@@ -30,12 +31,14 @@ stages:
         workingDirectory: $(srcWorkingDir)
 
       - publish: '$(Build.ArtifactStagingDirectory)'
-        artifact: WebApp
+        displayName: 'Publish artifact'
+        artifact: $(artifactName)
 
 - stage: Provision
   displayName: Provision with Terraform
   jobs:
   - job: terraformdeploy
+    displayName: 'Terraform'
     pool:
       vmImage: $(vmImageName)
     variables:
@@ -99,9 +102,10 @@ stages:
       vmImage: $(vmImageName)
     steps:
       - task: DownloadPipelineArtifact@2
+        displayName: 'Download artifacts'
         inputs:
           buildType: 'current'
-          artifact: WebApp
+          artifact: $(artifactName)
           downloadPath: '$(System.ArtifactsDirectory)'
 
       - task: AzureWebApp@1
@@ -111,4 +115,4 @@ stages:
           appType: webAppLinux
           appName: $(webAppName)
           runtimeStack: 'DOTNETCORE|5.0'
-          package: $(System.ArtifactsDirectory)/drop
+          package: $(System.ArtifactsDirectory)/$(artifactName)
