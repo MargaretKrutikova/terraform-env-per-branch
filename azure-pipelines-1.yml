@@ -71,3 +71,27 @@ stages:
           powerShellIgnoreLASTEXITCODE: false
           workingDirectory: $(terraformWorkingDir)
           arguments: $(Build.SourceBranchName)
+
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: 
+  - Build
+  - Provision
+  condition: succeeded()
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    variables:
+      - name: webAppName
+        value: $[ stageDependencies.Provision.terraformdeploy.outputs['terraform.webAppName'] ]
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: AzureWebApp@1
+      displayName: 'Azure Web App Deploy: '
+      inputs:
+        azureSubscription: $(azureSubscription)
+        appType: webAppLinux
+        appName: $(webAppName)
+        runtimeStack: 'DOTNETCORE|5.0'
+        package: $(System.DefaultWorkingDirectory)/**/*.zip
