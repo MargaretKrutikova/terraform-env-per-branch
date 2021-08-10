@@ -54,11 +54,8 @@ resource "azurerm_app_service" "local" {
   resource_group_name = azurerm_resource_group.local.name
   app_service_plan_id = azurerm_app_service_plan.local.id
   
-  app_settings = {
-    "WEBSITE_NODE_DEFAULT_VERSION" = "14.15.1"
-  }
   site_config {
-    linux_fx_version = "NODE|14"
+    dotnet_framework_version = "v5.0"
   }
 }
 
