@@ -8,8 +8,8 @@ variables:
   azureSubscription: 'c8a57e97-c12f-4a1a-bf49-5f21b3cad8b2'
   vmImageName: 'ubuntu-latest'
   buildConfiguration: 'Release'
-  srcWorkingDir: './src'
-  terraformWorkingDir: './terraform'
+  srcWorkingDir: '$(Build.SourcesDirectory)/src'
+  terraformWorkingDir: '$(Build.SourcesDirectory)/terraform'
 
 stages:
 - stage: Build
@@ -33,3 +33,41 @@ stages:
           publishWebProjects: True
           arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
           zipAfterPublish: True
+
+- stage: Provision
+  displayName: Provision with Terraform
+  jobs:
+  - job: terraformdeploy
+    pool:
+      vmImage: $(vmImageName)
+    variables:
+      - group: TerraformBackendVars
+    steps:
+      - task: TerraformInstaller@0
+        displayName: Install Terraform
+        inputs:
+          terraformVersion: '1.0.3'
+      - script: |
+          terraform init \
+              -backend-config="storage_account_name=$storage_account_name" \
+              -backend-config="sas_token=$sas_token"
+        failOnStderr: true
+        workingDirectory: $(terraformWorkingDir)
+        displayName: Terraform Init
+        env:
+          storage_account_name:     $(storage_account_name)
+          sas_token:                $(sas_token)
+
+      - task: AzureCLI@2
+        name: terraform
+        displayName: 'Terraform apply'
+        inputs:
+          azureSubscription: '$(azureSubscription)'
+          scriptType: pscore
+          scriptPath: $(Build.SourcesDirectory)/deploy/terraform-apply.ps1
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          failOnStandardError: true
+          powerShellIgnoreLASTEXITCODE: false
+          workingDirectory: $(terraformWorkingDir)
+          arguments: $(Build.SourceBranchName)
