@@ -106,7 +106,6 @@ stages:
         inputs:
           buildType: 'current'
           artifact: $(artifactName)
-          downloadPath: '$(System.ArtifactsDirectory)'
 
       - task: AzureWebApp@1
         displayName: 'Azure Web App Deploy: '
@@ -115,4 +114,4 @@ stages:
           appType: webAppLinux
           appName: $(webAppName)
           runtimeStack: 'DOTNETCORE|5.0'
-          package: $(System.ArtifactsDirectory)/$(artifactName)
+          package: $(Pipeline.Workspace)
