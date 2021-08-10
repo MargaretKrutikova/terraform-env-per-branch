@@ -1,23 +1,16 @@
-# Node.js Express Web App to Linux on Azure
-# Build a Node.js Express app and deploy it to Azure as a Linux web app.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
   - master
   - feature/*
 pr: none
 
 variables:
-
   # Azure Resource Manager connection created during pipeline creation
-  azureSubscription: '429e68d9-e49e-437c-a696-d306e0869bc1'
-
-  # Environment name
-  environmentName: 'DEVELOPMENT'
-
-  # Agent VM image name
+  azureSubscription: 'c8a57e97-c12f-4a1a-bf49-5f21b3cad8b2'
+  artifactName: 'WebApp'
   vmImageName: 'ubuntu-latest'
+  buildConfiguration: 'Release'
+  srcWorkingDir: '$(Build.SourcesDirectory)/src'
+  terraformWorkingDir: '$(Build.SourcesDirectory)/terraform'
 
 stages:
 - stage: Build
@@ -29,33 +22,23 @@ stages:
       vmImage: $(vmImageName)
 
     steps:
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '14.x'
-      displayName: 'Install Node.js'
+      - script: dotnet build --configuration $(buildConfiguration)
+        workingDirectory: $(srcWorkingDir)
+        displayName: 'dotnet build'
 
-    - script: |
-        npm install
-        npm run build --if-present
-        npm run test --if-present
-      displayName: 'npm install, build and test'
+      - script: dotnet publish --configuration $(buildConfiguration) -o $(Build.ArtifactStagingDirectory)
+        displayName: 'dotnet publish'
+        workingDirectory: $(srcWorkingDir)
 
-    - task: ArchiveFiles@2
-      displayName: 'Archive files'
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-        replaceExistingArchive: true
-
-    - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-      artifact: drop
+      - publish: '$(Build.ArtifactStagingDirectory)'
+        displayName: 'Publish artifact'
+        artifact: $(artifactName)
 
 - stage: Provision
   displayName: Provision with Terraform
   jobs:
   - job: terraformdeploy
+    displayName: 'Terraform'
     pool:
       vmImage: $(vmImageName)
     variables:
@@ -66,94 +49,43 @@ stages:
         inputs:
           terraformVersion: '1.0.3'
       - script: |
-          cd ./terraform
           terraform init \
-              -backend-config="storage_account_name=$STORAGE_ACCOUNT_NAME" \
-              -backend-config="container_name=$TERRAFORM_CONTAINER_NAME" \
-              -backend-config="key=$TERRAFORM_FILE_KEY" \
-              -backend-config="sas_token=$SAS_TOKEN"
+              -backend-config="storage_account_name=$storage_account_name" \
+              -backend-config="sas_token=$sas_token"
         failOnStderr: true
+        workingDirectory: $(terraformWorkingDir)
         displayName: Terraform Init
         env:
-          STORAGE_ACCOUNT_NAME:     $(STORAGE_ACCOUNT_NAME)
-          TERRAFORM_CONTAINER_NAME: $(TERRAFORM_CONTAINER_NAME)
-          TERRAFORM_FILE_KEY:       $(TERRAFORM_FILE_KEY)
-          SAS_TOKEN:                $(SAS_TOKEN)
+          storage_account_name:     $(storage_account_name)
+          sas_token:                $(sas_token)
+
       - task: AzureCLI@2
         name: terraform
         displayName: 'Terraform apply'
         inputs:
           azureSubscription: '$(azureSubscription)'
           scriptType: pscore
-          scriptLocation: inlineScript
-          inlineScript: |
-            $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
-            $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
-            $env:ARM_TENANT_ID       ??= $env:tenantId
-            $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
-
-            $branchName = "$(Build.SourceBranchName)" -replace "/", "-"
-
-            echo "Terraform workspace $branchName"
-            if ($(terraform workspace list | grep -c "$branchName") -eq 0) {
-              echo "Create new workspace $branchName"
-              terraform workspace new "$branchName" -no-color
-            } else {
-              echo "Switch to workspace $branchName"
-              terraform workspace select "$branchName" -no-color
-            }
-
-            terraform apply -auto-approve -input=false
-            # Export Terraform output as task output
-            $terraformOutput = terraform output -json | ConvertFrom-Json -AsHashtable
-            foreach ($outputVariable in $terraformOutput.keys) {
-                echo $outputVariable
-                $value = $terraformOutput[$outputVariable].value
-                echo $value
-                if ($value) {
-                    Write-Host "##vso[task.setvariable variable=$outputVariable;isOutput=true]$value"
-                }
-            }   
+          scriptPath: $(Build.SourcesDirectory)/deploy/terraform-apply.ps1
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
           powerShellIgnoreLASTEXITCODE: false
-          workingDirectory: './terraform'
+          workingDirectory: $(terraformWorkingDir)
+          arguments: $(Build.SourceBranchName)
+
       - task: AzureCLI@2
         condition: and(succeeded(), in(variables['Build.Reason'], 'IndividualCI'), in(variables['Build.SourceBranchName'], 'master'))
-        displayName: Cleanup on every commit to master
+        displayName: Cleanup old environments on every commit to master
         inputs:
           azureSubscription: $(azureSubscription)
-          addSpnToEnvironment: true
           scriptType: pscore
-          scriptLocation: inlineScript
+          scriptPath: $(Build.SourcesDirectory)/deploy/terraform-cleanup.ps1
+          addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
           powerShellIgnoreLASTEXITCODE: false
-          workingDirectory: './terraform'
-          inlineScript: |
-            $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
-            $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
-            $env:ARM_TENANT_ID       ??= $env:tenantId
-            $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
-
-            $result = "$(Build.SourceVersionMessage)" | Select-String -Pattern "^Merge pull request #\d+ from .+\/feature\/(.+)"
-            if ($result.matches.success) {
-              $MERGED_BRANCH_NAME = $result.matches.groups[1]
-              Write-Output "Merged branch name: '$MERGED_BRANCH_NAME'"
-
-              if ($(terraform workspace list | grep -c "$MERGED_BRANCH_NAME") -ne 0) {
-                Write-Output "Switch to workspace '$MERGED_BRANCH_NAME'"
-                terraform workspace select "$MERGED_BRANCH_NAME"
-                
-                Write-Output "Destroying environment '$MERGED_BRANCH_NAME'"
-                terraform destroy -auto-approve
-
-                terraform workspace select master
-                Write-Output "Deleting '$MERGED_BRANCH_NAME'"
-                terraform workspace delete "$MERGED_BRANCH_NAME"
-              }
-            }
+          workingDirectory: $(terraformWorkingDir)
+          arguments: $(Build.SourceVersionMessage)
 
 - stage: Deploy
   displayName: Deploy stage
@@ -162,25 +94,24 @@ stages:
   - Provision
   condition: succeeded()
   jobs:
-  - deployment: Deploy
-    displayName: Deploy
-    environment: $(environmentName)
+  - job: Deploy
     variables:
       - name: webAppName
         value: $[ stageDependencies.Provision.terraformdeploy.outputs['terraform.webAppName'] ]
     pool:
       vmImage: $(vmImageName)
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: AzureWebApp@1
-            displayName: 'Azure Web App Deploy: '
-            inputs:
-              azureSubscription: $(azureSubscription)
-              appType: webAppLinux
-              appName: $(webAppName)
-              runtimeStack: 'NODE|14-lts'
-              package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
-              startUpCommand: 'npm run start'
+    steps:
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download artifacts'
+        inputs:
+          buildType: 'current'
+          artifact: $(artifactName)
 
+      - task: AzureWebApp@1
+        displayName: 'Azure Web App Deploy: '
+        inputs:
+          azureSubscription: $(azureSubscription)
+          appType: webAppLinux
+          appName: $(webAppName)
+          runtimeStack: 'DOTNETCORE|5.0'
+          package: $(Pipeline.Workspace)
