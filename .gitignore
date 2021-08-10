@@ -1,4 +1,25 @@
-/node_modules
+.DS_Store
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+.fake
+.ionide
+.idea
+app.db
+Hangfire.db
+*.DotSettings.user
+publish_output/
+publish_output.zip
+farmer-deploy.json
+**/node_modules/*
+**/wwwroot/transpiled/*
+swagger.json
+openapitools.json
+
+publish
+publish.zip
   
 #  Local .terraform directories
 **/.terraform/*

@@ -41,9 +41,10 @@ resource "azurerm_app_service_plan" "local" {
   resource_group_name = azurerm_resource_group.local.name
   kind = "Linux"
   reserved = true
+    
   sku {
     tier = "Free"
-    size = "S1"
+    size = "F1"
   }
 }
 
@@ -52,7 +53,7 @@ resource "azurerm_app_service" "local" {
   location = azurerm_resource_group.local.location
   resource_group_name = azurerm_resource_group.local.name
   app_service_plan_id = azurerm_app_service_plan.local.id
-
+  
   app_settings = {
     "WEBSITE_NODE_DEFAULT_VERSION" = "14.15.1"
   }
