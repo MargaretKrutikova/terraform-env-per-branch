@@ -111,7 +111,5 @@ stages:
         displayName: 'Azure Web App Deploy: '
         inputs:
           azureSubscription: $(azureSubscription)
-          appType: webAppLinux
           appName: $(webAppName)
-          runtimeStack: 'DOTNETCORE|5.0'
           package: $(Pipeline.Workspace)
