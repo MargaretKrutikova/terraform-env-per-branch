@@ -72,6 +72,20 @@ stages:
           workingDirectory: $(terraformWorkingDir)
           arguments: $(Build.SourceBranchName)
 
+     - task: AzureCLI@2
+        condition: and(succeeded(), in(variables['Build.Reason'], 'IndividualCI'), in(variables['Build.SourceBranchName'], 'master'))
+        displayName: Cleanup old environments on every commit to master
+        inputs:
+          azureSubscription: $(azureSubscription)
+          scriptType: pscore
+          scriptPath: $(Build.SourcesDirectory)/deploy/terraform-cleanup.ps1
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          failOnStandardError: true
+          powerShellIgnoreLASTEXITCODE: false
+          workingDirectory: $(terraformWorkingDir)
+          arguments: $(Build.SourceVersionMessage)
+
 - stage: Deploy
   displayName: Deploy stage
   dependsOn: 
