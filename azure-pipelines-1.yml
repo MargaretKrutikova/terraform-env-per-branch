@@ -34,6 +34,11 @@ stages:
           arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
           zipAfterPublish: True
 
+      - task: PublishBuildArtifacts@1
+        inputs:
+          pathToPublish: '$(Build.ArtifactStagingDirectory)'
+          artifactName: drop
+
 - stage: Provision
   displayName: Provision with Terraform
   jobs:
@@ -100,6 +105,13 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
+      - task: DownloadBuildArtifacts@0
+        inputs:
+          buildType: 'current'
+          downloadType: 'single'
+          artifactName: 'drop'
+          downloadPath: '$(System.ArtifactsDirectory)'
+
       - task: AzureWebApp@1
         displayName: 'Azure Web App Deploy: '
         inputs:
@@ -107,4 +119,4 @@ stages:
           appType: webAppLinux
           appName: $(webAppName)
           runtimeStack: 'DOTNETCORE|5.0'
-          package: $(System.DefaultWorkingDirectory)/**/*.zip
+          package: $(System.ArtifactsDirectory)/drop
