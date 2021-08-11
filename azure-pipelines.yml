@@ -85,7 +85,7 @@ stages:
           failOnStandardError: true
           powerShellIgnoreLASTEXITCODE: false
           workingDirectory: $(terraformWorkingDir)
-          arguments: '$(Build.SourceVersionMessage)'
+          arguments: "$(Build.SourceVersionMessage)"
 
 - stage: Deploy
   displayName: Deploy stage
